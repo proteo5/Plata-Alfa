@@ -6,10 +6,17 @@ namespace PlataAlfa.DB.MongoDB.Test
     [TestClass]
     public class EnvironmentTest
     {
+        internal Environment env;
+
+        public EnvironmentTest()
+        {
+            env = new Environment("plataalfa", "localhost");
+        }
+
         [TestMethod]
         public void ListDatabasesTest()
         {
-            var x = Environment.ListTables();
+            var x = env.ListTables();
         }
     }
 }

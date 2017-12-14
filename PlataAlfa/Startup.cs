@@ -27,7 +27,8 @@ namespace PlataAlfa
 
             app.Run(async (context) =>
             {
-                await context.Response.WriteAsync("Hello World!");
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsync("{\"application\": \"Plata Alfa\"}");
             });
         }
     }

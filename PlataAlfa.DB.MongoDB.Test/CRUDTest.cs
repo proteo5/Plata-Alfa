@@ -8,49 +8,55 @@ namespace PlataAlfa.DB.MongoDB.Test
     [TestClass]
     public class CRUDTest
     {
-        [TestMethod]
-        public void ConstructorTest()
-        {
-            var x = new CRUD("ticker_data");
+        internal CRUD x;
+
+        public CRUDTest() {
+            x = new CRUD("ticker_data", "plataalfa", "localhost");
         }
+
+        //[TestMethod]
+        //public void ConstructorTest()
+        //{
+        //    x = new CRUD("ticker_data", "plataalfa", "localhost");
+        //}
 
         [TestMethod]
         public void GetAllTest()
         {
-            var x = new CRUD("ticker_data");
+            //var x = new CRUD("ticker_data");
             var y = x.Query().Where(z => z["success"] == true).ToList();
         }
 
         [TestMethod]
         public void InsertTest()
         {
-            var db = new CRUD("DataTest");
+            //var db = new CRUD("DataTest");
             var data = new BsonDocument
                 {
                     { "name", "joachim" }
                 };
 
-            db.Insert(data);
+            x.Insert(data);
 
         }
 
         [TestMethod]
         public void UpdateTest()
         {
-            var db = new CRUD("DataTest");
-            var data = db.Query().FirstOrDefault();
+            //var db = new CRUD("DataTest");
+            var data = x.Query().FirstOrDefault();
             data["name"] = "joachim modificado";
 
-            db.Save(data);
+            x.Save(data);
         }
 
         [TestMethod]
         public void DeleteTest()
         {
-            var db = new CRUD("DataTest");
-            var data = db.Query().FirstOrDefault();
+            //var db = new CRUD("DataTest");
+            var data = x.Query().FirstOrDefault();
 
-            db.Delete(data);
+            x.Delete(data);
         }
     }
 }

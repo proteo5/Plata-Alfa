@@ -9,11 +9,13 @@ namespace PlataAlfa.DB.MongoDB
 {
      public class CRUD
     {
+        internal readonly Environment environment = null;
         internal IMongoCollection<BsonDocument> _collection;
 
-        public CRUD(string Table)
+        public CRUD(string Table,string database, string server="localhost")
         {
-            _collection = Environment.database.GetCollection<BsonDocument>(Table);
+            environment = new Environment(database, server);
+            _collection = environment.database.GetCollection<BsonDocument>(Table);
         }
 
         public IQueryable<BsonDocument> Query()
