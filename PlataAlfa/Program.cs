@@ -7,12 +7,14 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using PlataAlfa.core;
 
 namespace PlataAlfa
 {
     public class Program
     {
         public static IConfigurationRoot Configuration { get; set; }
+        public static IEnumerable<Type> Entities = null;
 
         public static void Main(string[] args)
         {
@@ -21,6 +23,8 @@ namespace PlataAlfa
             .AddJsonFile("appsettings.json");
 
             Configuration = builder.Build();
+
+            Entities = EntityLoader.LoadEntities();
 
             BuildWebHost(args).Run();
         }

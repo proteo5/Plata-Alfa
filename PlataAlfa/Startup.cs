@@ -27,8 +27,6 @@ namespace PlataAlfa
                 app.UseDeveloperExceptionPage();
             }
 
-            //app.Use(next => context => { context.Request.EnableRewind(); return next(context); });
-
             app.UsePlataAlfa();
 
             app.Run(async (context) =>
