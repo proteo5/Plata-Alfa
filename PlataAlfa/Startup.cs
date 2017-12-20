@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using PlataAlfa.core;
+using Microsoft.AspNetCore.Http.Internal;
 
 namespace PlataAlfa
 {
@@ -24,6 +26,10 @@ namespace PlataAlfa
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            //app.Use(next => context => { context.Request.EnableRewind(); return next(context); });
+
+            app.UsePlataAlfa();
 
             app.Run(async (context) =>
             {
