@@ -58,13 +58,13 @@ namespace PlataAlfa.core
                         else
                         {
                             context.Response.StatusCode = 400;
-                            await context.Response.WriteAsync("Resource not found!");
+                            await context.Response.WriteAsync("Resource action not found!");
                         }
                     }
                     else
                     {
                         context.Response.StatusCode = 400;
-                        await context.Response.WriteAsync("Resource not found!");
+                        await context.Response.WriteAsync("Resource entity not found!");
                     }
                 }
                 catch (Exception ex)

@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace PlataAlfa.core
+namespace PlataAlfa.api.V1_0.Admin
 {
-    public class Entity
+    public class Roles
     {
-        
-
-
     }
 }
