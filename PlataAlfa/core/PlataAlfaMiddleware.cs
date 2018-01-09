@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Json;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
-
+using Newtonsoft.Json;
 
 namespace PlataAlfa.core
 {
@@ -28,31 +27,41 @@ namespace PlataAlfa.core
                 {
                     context.Request.EnableRewind();
                     string jsonData = new StreamReader(context.Request.Body).ReadToEnd();
-                    JsonObject jsonDoc = (JsonObject)JsonObject.Parse(jsonData);
+                    dynamic pk = JsonConvert.DeserializeObject(jsonData);
 
-                    var entity = Program.Entities.Where(x => x.FullName == "PlataAlfa.api.V1_0.Users");
-                    if (entity.Count() != 0)
+                    string version = pk.Version;
+                    string area = pk.Area == null ? string.Empty : $"{pk.Area}.";
+                    string entity = pk.Entity;
+                    string action = pk.Action;
+                    var data = pk.Data == null ? null : pk.Data;
+                    string path = $"PlataAlfa.api.V{version.ToString().Replace('.', '_')}.";
+                    path += $"{area}{entity}";
+
+                    var entityObj = Program.Entities.Where(x => x.FullName == path);
+                    if (entityObj.Count() != 0)
                     {
-                        MethodInfo action = entity.FirstOrDefault().GetMethod("GetAll");
+                        MethodInfo actionMethod = entityObj.FirstOrDefault().GetMethod(action);
 
-                        if (action != null)
+                        if (actionMethod != null)
                         {
-                            object result = null;
-                            ParameterInfo[] parameters = action.GetParameters();
-                            object classInstance = Activator.CreateInstance(entity.FirstOrDefault(), null);
+                            Envelope result = null;
+                            ParameterInfo[] parameters = actionMethod.GetParameters();
+                            object classInstance = Activator.CreateInstance(entityObj.FirstOrDefault(), null);
 
                             if (parameters.Length == 0)
                             {
-                                result = action.Invoke(classInstance, null);
+                                result = (Envelope) actionMethod.Invoke(classInstance, null);
                             }
                             else
                             {
-                                object[] parametersArray = new object[] { jsonData };           
-                                result = action.Invoke(classInstance, parametersArray);
+                                object[] parametersArray = new object[] { data };
+                                result = (Envelope) actionMethod.Invoke(classInstance, parametersArray);
                             }
 
+                            string json = JsonConvert.SerializeObject(result);
+
                             context.Response.ContentType = "application/json";
-                            await context.Response.WriteAsync((string)result);
+                            await context.Response.WriteAsync(json);
 
                         }
                         else
@@ -72,7 +81,7 @@ namespace PlataAlfa.core
                     context.Response.StatusCode = 500;
                     await context.Response.WriteAsync(ex.Message);
                 }
-               
+
             }
             else
             {

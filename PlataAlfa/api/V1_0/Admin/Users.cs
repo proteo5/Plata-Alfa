@@ -8,8 +8,9 @@ namespace PlataAlfa.api.V1_0.Admin
 {
     public class Users : Entity
     {
-        public string GetAll(string data) {
-            return data;
+        public Envelope GetAll(object data)
+        {
+            return new Envelope() { Result = "ok", Data = data };
         }
     }
 }
