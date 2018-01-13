@@ -7,12 +7,12 @@ using System.Text;
 
 namespace PlataAlfa.DB.MongoDB
 {
-     public class CRUD
+    public class CRUD
     {
         internal readonly Environment environment = null;
         internal IMongoCollection<BsonDocument> _collection;
 
-        public CRUD(string Table,string database, string server="localhost")
+        public CRUD(string Table, string database, string server = "localhost")
         {
             environment = new Environment(database, server);
             _collection = environment.database.GetCollection<BsonDocument>(Table);
@@ -63,6 +63,11 @@ namespace PlataAlfa.DB.MongoDB
             {
                 throw new Exception("Can't delete an document when _id is not defined.");
             }
+        }
+
+        public ObjectId GenerateNewId()
+        {
+            return ObjectId.GenerateNewId();
         }
 
     }

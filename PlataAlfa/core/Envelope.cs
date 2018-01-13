@@ -10,6 +10,11 @@ namespace PlataAlfa.core
         public string Result { get; set; }
         public string Message { get; set; }
         public Exception Exception { get; set; }
-        public object Data { get; set; }
+    }
+
+    public class Envelope<T> : Envelope
+    {
+        
+        public T Data { get; set; }
     }
 }

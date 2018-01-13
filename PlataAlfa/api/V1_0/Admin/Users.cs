@@ -10,7 +10,8 @@ namespace PlataAlfa.api.V1_0.Admin
     {
         public Envelope GetAll(object data)
         {
-            return new Envelope() { Result = "ok", Data = data };
+            // return new Envelope() { Result = "ok", Data = data };
+            throw new NotImplementedException();
         }
     }
 }
