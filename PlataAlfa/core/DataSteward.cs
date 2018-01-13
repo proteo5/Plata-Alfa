@@ -1,6 +1,8 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Bson.IO;
 using PlataAlfa.DB.MongoDB;
 using System;
+using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,10 +12,11 @@ namespace PlataAlfa.core
     public class DataSteward
     {
         internal readonly CRUD crud;
+        private readonly JsonWriterSettings jsonWriterSettings = new JsonWriterSettings { OutputMode = JsonOutputMode.Strict };
 
         public DataSteward()
         {
-            string entityName = this.GetType().Name.Replace("DS", string.Empty);
+            string entityName = this.GetType().Name.Replace("DS", string.Empty).ToLower();
             //crud = new CRUD(entityName, Program.Configuration["conString.database"], Program.Configuration["conString.server"]);
             crud = new CRUD(entityName, "plataalfa", "localhost");
         }
@@ -23,58 +26,65 @@ namespace PlataAlfa.core
             return crud.Query();
         }
 
-        public Envelope<ObjectId> GenerateNewId()
+        public Envelope<string> GenerateNewId()
         {
             try
             {
-                return new Envelope<ObjectId>() { Result = "ok", Data = crud.GenerateNewId() };
+                return new Envelope<string>() { Result = "ok", Data = crud.GenerateNewId().ToString() };
             }
             catch (Exception ex)
             {
-                return new Envelope<ObjectId>() { Result = "error", Message = ex.Message };
+                return new Envelope<string>() { Result = "error", Message = ex.Message };
             }
 
         }
 
-        public Envelope<List<BsonDocument>> GetAll()
+        public Envelope<string> GetAll()
         {
             try
             {
                 var data = crud.Query().ToList();
+
                 if (data.Count() != 0)
-                    return new Envelope<List<BsonDocument>>() { Result = "ok", Data = data };
+                {
+                    return new Envelope<string>() { Result = "ok", Data = data.ToJsonArray() };
+                }
                 else
-                    return new Envelope<List<BsonDocument>>() { Result = "notSuccess", Message = "Not Found" };
+                {
+                    return new Envelope<string>() { Result = "notSuccess", Message = "Not Found" };
+                }
             }
             catch (Exception ex)
             {
-                return new Envelope<List<BsonDocument>> { Result = "error", Message = ex.Message };
+                return new Envelope<string> { Result = "error", Message = ex.Message };
             }
 
         }
 
-        public Envelope GetByID(ObjectId id)
+        public Envelope<string> GetByID(string id)
         {
             try
             {
-                var data = crud.Query().Where(d => d["_id"] == id);
+                var data = crud.Query().Where(d => d["_id"] == new ObjectId(id));
                 if (data.Count() != 0)
-                    return new Envelope<BsonDocument>() { Result = "ok", Data = data.FirstOrDefault() };
+                    return new Envelope<string>() { Result = "ok", Data = data.FirstOrDefault().ToJson(jsonWriterSettings) };
                 else
-                    return new Envelope<BsonDocument>() { Result = "notSuccess", Message = "Not Found" };
+                    return new Envelope<string>() { Result = "notSuccess", Message = "Not Found" };
             }
             catch (Exception ex)
             {
-                return new Envelope() { Result = "error", Message = ex.Message };
+                return new Envelope<string>() { Result = "error", Message = ex.Message };
             }
 
         }
 
-        public Envelope Insert(BsonDocument data)
+        public Envelope Insert(string data)
         {
             try
             {
-                crud.Insert(data);
+                MongoDB.Bson.BsonDocument document
+                     = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(data);
+                crud.Insert(document);
                 return new Envelope() { Result = "ok" };
             }
             catch (Exception ex)
@@ -83,11 +93,13 @@ namespace PlataAlfa.core
             }
         }
 
-        public Envelope Save(BsonDocument data)
+        public Envelope Save(string data)
         {
             try
             {
-                crud.Save(data);
+                MongoDB.Bson.BsonDocument document
+                    = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(data);
+                crud.Save(document);
                 return new Envelope() { Result = "ok" };
             }
             catch (Exception ex)
@@ -96,11 +108,13 @@ namespace PlataAlfa.core
             }
         }
 
-        public Envelope Delete(BsonDocument data)
+        public Envelope Delete(string data)
         {
             try
             {
-                crud.Delete(data);
+                MongoDB.Bson.BsonDocument document
+                    = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(data);
+                crud.Delete(document);
                 return new Envelope() { Result = "ok" };
             }
             catch (Exception ex)
@@ -108,7 +122,23 @@ namespace PlataAlfa.core
                 return new Envelope() { Result = "error", Message = ex.Message };
             }
         }
+    }
+    public static class DataStewardExtensions
+    {
+        private static readonly JsonWriterSettings jsonWriterSettings = new JsonWriterSettings { OutputMode = JsonOutputMode.Strict };
 
+        public static string ToJsonArray(this List<BsonDocument> jsonArray)
+        {
+            StringBuilder json = new StringBuilder();
+            json.Append("[");
+
+            foreach (var doc in jsonArray)
+                json.Append($"{doc.ToJson(jsonWriterSettings)},");
+
+            json.Length--;
+            json.Append("]");
+            return json.ToString();
+        }
 
     }
 }

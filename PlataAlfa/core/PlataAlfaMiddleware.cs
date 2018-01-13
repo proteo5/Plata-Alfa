@@ -50,12 +50,12 @@ namespace PlataAlfa.core
 
                             if (parameters.Length == 0)
                             {
-                                result = (Envelope) actionMethod.Invoke(classInstance, null);
+                                result = (Envelope)actionMethod.Invoke(classInstance, null);
                             }
                             else
                             {
                                 object[] parametersArray = new object[] { data };
-                                result = (Envelope) actionMethod.Invoke(classInstance, parametersArray);
+                                result = (Envelope)actionMethod.Invoke(classInstance, parametersArray);
                             }
 
                             string json = JsonConvert.SerializeObject(result);

@@ -6,9 +6,7 @@ using System.Threading.Tasks;
 namespace PlataAlfa.core
 {
     public class Entity
-    {
-        
-
+    { 
 
     }
 }

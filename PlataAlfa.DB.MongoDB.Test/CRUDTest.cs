@@ -14,12 +14,6 @@ namespace PlataAlfa.DB.MongoDB.Test
             x = new CRUD("ticker_data", "plataalfa", "localhost");
         }
 
-        //[TestMethod]
-        //public void ConstructorTest()
-        //{
-        //    x = new CRUD("ticker_data", "plataalfa", "localhost");
-        //}
-
         [TestMethod]
         public void GetAllTest()
         {

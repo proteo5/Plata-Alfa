@@ -4,7 +4,7 @@ using PlataAlfa.core;
 using System;
 using Xunit;
 
-namespace PlataAlfa.Test
+namespace PlataAlfa.Test.core
 {
     public class DataStewardTest
     {
@@ -33,34 +33,34 @@ namespace PlataAlfa.Test
         [Fact]
         public void GetAllQueryTest()
         {
-            //var x = new CRUD("ticker_data");
-            var y = dataSteward.Query().ToList();
+            var y = dataSteward.Query().ToJson();
         }
 
         [Fact]
         public void GetAllTest()
         {
-            //var x = new CRUD("ticker_data");
             var y = dataSteward.GetAll();
         }
 
         [Fact]
         public void GetByID()
         {
-            //var x = new CRUD("ticker_data");
-            var y = dataSteward.GetByID(new ObjectId("5a59d9713fc8e72fb84023e7"));
+            var y = dataSteward.GetByID("5a59ec588236110698379fcd");
         }
 
         [Fact]
         public void InsertTest()
         {
-            //var db = new CRUD("DataTest");
             var data = new BsonDocument
                 {
-                    { "name", "joachim" }
+                    { "name", "User" },
+                    { "lastname", "to Test " },
+                    { "user", "user" },
+                    { "Password", "123" },
+                    { "IsActive", true }
                 };
 
-            dataSteward.Insert(data);
+            dataSteward.Insert(data.ToJson());
 
         }
 
@@ -69,16 +69,16 @@ namespace PlataAlfa.Test
         {
             //var db = new CRUD("DataTest");
             var data = dataSteward.Query().FirstOrDefault();
-            data["name"] = "joachim modificado";
+            data["name"] = "User updated";
 
-            dataSteward.Save(data);
+            dataSteward.Save(data.ToJson());
         }
 
         [Fact]
         public void DeleteTest()
         {
             //var db = new CRUD("DataTest");
-            var data = dataSteward.Query().FirstOrDefault();
+            var data = dataSteward.Query().FirstOrDefault().ToJson();
 
             dataSteward.Delete(data);
         }
