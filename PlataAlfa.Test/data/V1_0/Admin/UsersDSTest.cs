@@ -38,12 +38,12 @@ namespace PlataAlfa.Test.data.V1_0.Admin
 
         }
 
-        [Fact]
-        public void GetAllTest()
-        {
-            var y = usersDS.GetAll();
-            Assert.Equal("ok", y.Result);
-        }
+        //[Fact]
+        //public void GetAllTest()
+        //{
+        //    var y = usersDS.GetAll();
+        //    Assert.Equal("ok", y.Result);
+        //}
 
         [Fact]
         public void GetByID()
@@ -52,12 +52,12 @@ namespace PlataAlfa.Test.data.V1_0.Admin
             Assert.Equal("ok", y.Result);
         }
 
-        [Fact]
-        public void GetByUser()
-        {
-            var y = usersDS.GetByUser("user");
-            Assert.Equal("ok", y.Result);
-        }
+        //[Fact]
+        //public void GetByUser()
+        //{
+        //    var y = usersDS.GetByUser("user");
+        //    Assert.Equal("ok", y.Result);
+        //}
 
 
         [Fact]

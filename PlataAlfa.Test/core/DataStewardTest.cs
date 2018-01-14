@@ -36,11 +36,11 @@ namespace PlataAlfa.Test.core
             var y = dataSteward.Query().ToJson();
         }
 
-        [Fact]
-        public void GetAllTest()
-        {
-            var y = dataSteward.GetAll();
-        }
+        //[Fact]
+        //public void GetAllTest()
+        //{
+        //    var y = dataSteward.GetAll();
+        //}
 
         [Fact]
         public void GetByID()

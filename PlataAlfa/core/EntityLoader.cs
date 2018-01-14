@@ -15,7 +15,7 @@ namespace PlataAlfa.core
             Assembly assembly = null;
             var library = DependencyContext.Default.RuntimeLibraries.Where(x => x.Name == "PlataAlfa").FirstOrDefault();
             assembly = Assembly.Load(new AssemblyName(library.Name));
-            var Entities = assembly.GetTypes().Where(x => x.BaseType == typeof(Entity));
+            var Entities = assembly.GetTypes().Where(x => x.BaseType == typeof(Entity) || x.BaseType == typeof(DataSteward));
             return Entities;
 
         }

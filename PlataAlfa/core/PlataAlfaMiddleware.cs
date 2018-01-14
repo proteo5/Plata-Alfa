@@ -34,10 +34,12 @@ namespace PlataAlfa.core
                     string entity = pk.Entity;
                     string action = pk.Action;
                     var data = pk.Data == null ? null : pk.Data;
-                    string path = $"PlataAlfa.api.V{version.ToString().Replace('.', '_')}.";
-                    path += $"{area}{entity}";
+                    string pathApi = $"PlataAlfa.api.V{version.ToString().Replace('.', '_')}.";
+                    pathApi += $"{area}{entity}";
+                    string pathData = $"PlataAlfa.data.V{version.ToString().Replace('.', '_')}.";
+                    pathData += $"{area}{entity}";
 
-                    var entityObj = Program.Entities.Where(x => x.FullName == path);
+                    var entityObj = Program.Entities.Where(x => x.FullName == pathApi || x.FullName == pathData);
                     if (entityObj.Count() != 0)
                     {
                         MethodInfo actionMethod = entityObj.FirstOrDefault().GetMethod(action);

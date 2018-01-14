@@ -6,6 +6,8 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Dynamic;
+using Newtonsoft.Json.Linq;
 
 namespace PlataAlfa.core
 {
@@ -39,51 +41,53 @@ namespace PlataAlfa.core
 
         }
 
-        public Envelope<string> GetAll()
+        //ToDo: Implement
+        //public Envelope<string> GetAll()
+        //{
+        //    try
+        //    {
+        //        var data = crud.Query().ToList();
+
+        //        if (data.Count() != 0)
+        //        {
+        //            return new Envelope<string>() { Result = "ok", Data = data.ToDynamicArray() };
+        //        }
+        //        else
+        //        {
+        //            return new Envelope<string>() { Result = "notSuccess", Message = "Not Found" };
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return new Envelope<string> { Result = "error", Message = ex.Message };
+        //    }
+
+        //}
+
+        public Envelope<dynamic> GetByID(dynamic data)
         {
             try
             {
-                var data = crud.Query().ToList();
-
-                if (data.Count() != 0)
-                {
-                    return new Envelope<string>() { Result = "ok", Data = data.ToJsonArray() };
-                }
+                string id = data._id;
+                var dataSet = crud.Query().Where(d => d["_id"] == new ObjectId(id));
+                if (dataSet.Count() != 0)
+                    return new Envelope<dynamic>() { Result = "ok", Data = dataSet.FirstOrDefault().ToDynamic() };
                 else
-                {
-                    return new Envelope<string>() { Result = "notSuccess", Message = "Not Found" };
-                }
+                    return new Envelope<dynamic>() { Result = "notSuccess", Message = "Not Found" };
             }
             catch (Exception ex)
             {
-                return new Envelope<string> { Result = "error", Message = ex.Message };
+                return new Envelope<dynamic>() { Result = "error", Message = ex.Message };
             }
 
         }
 
-        public Envelope<string> GetByID(string id)
-        {
-            try
-            {
-                var data = crud.Query().Where(d => d["_id"] == new ObjectId(id));
-                if (data.Count() != 0)
-                    return new Envelope<string>() { Result = "ok", Data = data.FirstOrDefault().ToJson(jsonWriterSettings) };
-                else
-                    return new Envelope<string>() { Result = "notSuccess", Message = "Not Found" };
-            }
-            catch (Exception ex)
-            {
-                return new Envelope<string>() { Result = "error", Message = ex.Message };
-            }
-
-        }
-
-        public Envelope Insert(string data)
+        public Envelope Insert(dynamic data)
         {
             try
             {
                 MongoDB.Bson.BsonDocument document
-                     = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(data);
+                     = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(data.ToString());
                 crud.Insert(document);
                 return new Envelope() { Result = "ok" };
             }
@@ -93,12 +97,13 @@ namespace PlataAlfa.core
             }
         }
 
-        public Envelope Save(string data)
+        public Envelope Save(dynamic data)
         {
             try
             {
                 MongoDB.Bson.BsonDocument document
-                    = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(data);
+                    = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(data.ToString());
+                document["_id"] = new ObjectId((string)document["_id"]);
                 crud.Save(document);
                 return new Envelope() { Result = "ok" };
             }
@@ -108,14 +113,25 @@ namespace PlataAlfa.core
             }
         }
 
-        public Envelope Delete(string data)
+        public Envelope Delete(dynamic data)
         {
             try
             {
-                MongoDB.Bson.BsonDocument document
-                    = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(data);
-                crud.Delete(document);
-                return new Envelope() { Result = "ok" };
+                var response = this.GetByID(data);
+
+                if (response.Result == "ok")
+                {
+                    var docJson = Newtonsoft.Json.JsonConvert.SerializeObject(response.Data);
+                    MongoDB.Bson.BsonDocument document
+                        = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(docJson);
+                    document["_id"] = new ObjectId((string)document["_id"]);
+                    crud.Delete(document);
+                    return new Envelope() { Result = "ok" };
+                }
+                else
+                {
+                    return response;
+                }
             }
             catch (Exception ex)
             {
@@ -127,12 +143,12 @@ namespace PlataAlfa.core
     {
         private static readonly JsonWriterSettings jsonWriterSettings = new JsonWriterSettings { OutputMode = JsonOutputMode.Strict };
 
-        public static string ToJsonArray(this List<BsonDocument> jsonArray)
+        public static string ToJsonArray(this List<BsonDocument> bsonArray)
         {
             StringBuilder json = new StringBuilder();
             json.Append("[");
 
-            foreach (var doc in jsonArray)
+            foreach (var doc in bsonArray)
                 json.Append($"{doc.ToJson(jsonWriterSettings)},");
 
             json.Length--;
@@ -140,5 +156,32 @@ namespace PlataAlfa.core
             return json.ToString();
         }
 
+        //ToDo: Implement
+        //public static string ToDynamicArray(this List<BsonDocument> bsonArray)
+        //{
+        //    StringBuilder json = new StringBuilder();
+        //    json.Append("[");
+
+        //    foreach (var doc in bsonArray)
+        //        json.Append($"{doc.ToJson(jsonWriterSettings)},");
+
+        //    json.Length--;
+        //    json.Append("]");
+        //    string stringJson= json.ToString();
+        //    return Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(stringJson);
+        //}
+
+        public static dynamic ToDynamic(this BsonDocument bson)
+        {
+            var json = bson.ToJson(new JsonWriterSettings { OutputMode = JsonOutputMode.Strict });
+            dynamic e = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(json);
+            BsonValue id;
+            if (bson.TryGetValue("_id", out id))
+            {
+                // Lets set _id again so that its possible to save document.
+                e._id = id.ToString();
+            }
+            return e;
+        }
     }
 }
