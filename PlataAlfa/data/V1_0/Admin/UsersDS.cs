@@ -9,23 +9,24 @@ namespace PlataAlfa.data.V1_0.Admin
 {
     public class UsersDS : DataSteward
     {
-        //ToDo: Implement
-        //public Envelope<string> GetByUser(string user)
-        //{
-        //    try
-        //    {
-        //        var data = crud.Query().Where(d => d["user"] == user);
-        //        if (data.Count() != 0)
-        //            return new Envelope<string>() { Result = "ok", Data = data.FirstOrDefault().ToJson() };
-        //        else
-        //            return new Envelope<string>() { Result = "notSuccess", Message = "Not Found" };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return new Envelope<string>() { Result = "error", Message = ex.Message };
-        //    }
+        public Envelope<dynamic> GetByUser(dynamic data)
+        {
+            try
+            {
+                string user = data.user;
+                //var dataSet = crud.Query().Where(d => d["user"] == user);
+                var dataSet = crud.GetFiltered(d => d["user"] == user);
+                if (dataSet.Count() != 0)
+                    return new Envelope<dynamic>() { Result = "ok", Data = dataSet.FirstOrDefault().ToDynamic() };
+                else
+                    return new Envelope<dynamic>() { Result = "notSuccess", Message = "Not Found" };
+            }
+            catch (Exception ex)
+            {
+                return new Envelope<dynamic>() { Result = "error", Message = ex.Message };
+            }
 
-        //}
+        }
 
         public void Seeds()
         {

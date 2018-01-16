@@ -1,8 +1,10 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace PlataAlfa.DB.MongoDB
@@ -21,6 +23,16 @@ namespace PlataAlfa.DB.MongoDB
         public IQueryable<BsonDocument> Query()
         {
             return _collection.AsQueryable<BsonDocument>();
+        }
+
+        public List<BsonDocument> GetFiltered(Expression<Func<BsonDocument, bool>> predicate)
+        {
+            return _collection.AsQueryable().Where(predicate).ToListAsync().Result ;
+        }
+
+        public List<BsonDocument> GetAll()
+        {
+            return _collection.AsQueryable().ToListAsync().Result;
         }
 
         public void Insert(BsonDocument document)

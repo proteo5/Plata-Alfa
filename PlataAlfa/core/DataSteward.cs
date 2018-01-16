@@ -8,6 +8,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Dynamic;
 using Newtonsoft.Json.Linq;
+using System.Linq.Expressions;
+using MongoDB.Driver.Linq;
 
 namespace PlataAlfa.core
 {
@@ -23,9 +25,14 @@ namespace PlataAlfa.core
             crud = new CRUD(entityName, "plataalfa", "localhost");
         }
 
-        public IQueryable<BsonDocument> Query()
+        internal IQueryable<BsonDocument> Query()
         {
             return crud.Query();
+        }
+
+        internal List<dynamic> GetFiltered(Expression<Func<BsonDocument, bool>> predicate)
+        {
+            return crud.GetFiltered(predicate).ToDynamicList();
         }
 
         public Envelope<string> GenerateNewId()
@@ -41,35 +48,37 @@ namespace PlataAlfa.core
 
         }
 
-        //ToDo: Implement
-        //public Envelope<string> GetAll()
-        //{
-        //    try
-        //    {
-        //        var data = crud.Query().ToList();
+        
+        public Envelope<List<dynamic>> GetAll()
+        {
+            try
+            {
+               var data = crud.Query().ToList();
+               // var data = crud.GetAll();
 
-        //        if (data.Count() != 0)
-        //        {
-        //            return new Envelope<string>() { Result = "ok", Data = data.ToDynamicArray() };
-        //        }
-        //        else
-        //        {
-        //            return new Envelope<string>() { Result = "notSuccess", Message = "Not Found" };
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return new Envelope<string> { Result = "error", Message = ex.Message };
-        //    }
+                if (data.Count() != 0)
+                {
+                    return new Envelope<List<dynamic>>() { Result = "ok", Data = data.ToDynamicList() };
+                }
+                else
+                {
+                    return new Envelope<List<dynamic>>() { Result = "notSuccess", Message = "Not Found" };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new Envelope<List<dynamic>> { Result = "error", Message = ex.Message };
+            }
 
-        //}
+        }
 
         public Envelope<dynamic> GetByID(dynamic data)
         {
             try
             {
                 string id = data._id;
-                var dataSet = crud.Query().Where(d => d["_id"] == new ObjectId(id));
+                //var dataSet = crud.Query().Where(d => d["_id"] == new ObjectId(id));
+                var dataSet = crud.GetFiltered(d => d["_id"] == new ObjectId(id));
                 if (dataSet.Count() != 0)
                     return new Envelope<dynamic>() { Result = "ok", Data = dataSet.FirstOrDefault().ToDynamic() };
                 else
@@ -156,20 +165,14 @@ namespace PlataAlfa.core
             return json.ToString();
         }
 
-        //ToDo: Implement
-        //public static string ToDynamicArray(this List<BsonDocument> bsonArray)
-        //{
-        //    StringBuilder json = new StringBuilder();
-        //    json.Append("[");
+        public static List<dynamic> ToDynamicList(this List<BsonDocument> bsonArray)
+        {
+            var list = new List<dynamic>();
+            foreach (var doc in bsonArray)
+                list.Add(doc.ToDynamic());
 
-        //    foreach (var doc in bsonArray)
-        //        json.Append($"{doc.ToJson(jsonWriterSettings)},");
-
-        //    json.Length--;
-        //    json.Append("]");
-        //    string stringJson= json.ToString();
-        //    return Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(stringJson);
-        //}
+            return list;
+        }
 
         public static dynamic ToDynamic(this BsonDocument bson)
         {

@@ -60,6 +60,8 @@ namespace PlataAlfa.core
                                 result = (Envelope)actionMethod.Invoke(classInstance, parametersArray);
                             }
 
+                            classInstance = null;
+                            //System.GC.Collect();
                             string json = JsonConvert.SerializeObject(result);
 
                             context.Response.ContentType = "application/json";
