@@ -36,8 +36,8 @@ namespace PlataAlfa.data.V1_0.Admin
                     { "name", "Administrator" },
                     { "lastname", "of the System" },
                     { "user", "admin" },
-                    { "Password", "123" },
-                    { "IsActive", true }
+                    { "password", "123" },
+                    { "isActive", true }
                 };
 
             crud.Insert(data);

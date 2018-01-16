@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 
 namespace PlataAlfa.core
@@ -19,6 +22,34 @@ namespace PlataAlfa.core
             _next = next;
         }
 
+        public bool TokenValid(string signedAndEncodedToken)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var plainTextSecurityKey = "abcdefghijklmnopqrstuvwyxz01234567980";
+                var signingKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(plainTextSecurityKey));
+                var tokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidAudiences = new string[] { "http://localhost:61101" },
+                    ValidIssuers = new string[] { "http://localhost:61101" },
+                    IssuerSigningKey = signingKey
+                };
+
+                SecurityToken validatedToken;
+                var claims = tokenHandler.ValidateToken(signedAndEncodedToken,
+                    tokenValidationParameters, out validatedToken);
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+
+                return false;
+            }
+        }
+
         public async Task Invoke(HttpContext context)
         {
             if (context.Request.Method == "POST" && context.Request.ContentType == "application/json")
@@ -29,55 +60,83 @@ namespace PlataAlfa.core
                     string jsonData = new StreamReader(context.Request.Body).ReadToEnd();
                     dynamic pk = JsonConvert.DeserializeObject(jsonData);
 
+
                     string version = pk.Version;
+                    string token = pk.Token;
                     string area = pk.Area == null ? string.Empty : $"{pk.Area}.";
-                    string entity = pk.Entity;
-                    string action = pk.Action;
-                    var data = pk.Data == null ? null : pk.Data;
-                    string pathApi = $"PlataAlfa.api.V{version.ToString().Replace('.', '_')}.";
-                    pathApi += $"{area}{entity}";
-                    string pathData = $"PlataAlfa.data.V{version.ToString().Replace('.', '_')}.";
-                    pathData += $"{area}{entity}";
+                    bool pass = area == string.Empty ? true : TokenValid(token);
 
-                    var entityObj = Program.Entities.Where(x => x.FullName == pathApi || x.FullName == pathData);
-                    if (entityObj.Count() != 0)
+                    if (pass)
                     {
-                        MethodInfo actionMethod = entityObj.FirstOrDefault().GetMethod(action);
+                        string entity = pk.Entity;
+                        string action = pk.Action;
+                        var data = pk.Data == null ? null : pk.Data;
+                        string pathApi = $"PlataAlfa.api.V{version.ToString().Replace('.', '_')}.";
+                        pathApi += $"{area}{entity}";
+                        string pathData = $"PlataAlfa.data.V{version.ToString().Replace('.', '_')}.";
+                        pathData += $"{area}{entity}";
 
-                        if (actionMethod != null)
+                        var entityObj = Program.Entities.Where(x => x.FullName == pathApi || x.FullName == pathData);
+                        if (entityObj.Count() != 0)
                         {
-                            Envelope result = null;
-                            ParameterInfo[] parameters = actionMethod.GetParameters();
-                            object classInstance = Activator.CreateInstance(entityObj.FirstOrDefault(), null);
+                            MethodInfo actionMethod = entityObj.FirstOrDefault().GetMethod(action);
 
-                            if (parameters.Length == 0)
+                            if (actionMethod != null)
                             {
-                                result = (Envelope)actionMethod.Invoke(classInstance, null);
+                                Envelope result = null;
+                                ParameterInfo[] parameters = actionMethod.GetParameters();
+                                object classInstance = Activator.CreateInstance(entityObj.FirstOrDefault(), null);
+
+                                if (parameters.Length == 0)
+                                {
+                                    result = (Envelope)actionMethod.Invoke(classInstance, null);
+                                }
+                                else
+                                {
+                                    object[] parametersArray = new object[parameters.Length];
+                                    int index = 0;
+                                    foreach (var param in parameters)
+                                    {
+                                        if (param.Name == "data")
+                                        {
+                                            parametersArray[index] = data;
+                                        }
+                                        else
+                                        {
+                                            var dependencyType = Program.Entities.Where(x => x.FullName == param.ParameterType.FullName);
+                                            object dependencyInstance = Activator.CreateInstance(dependencyType.FirstOrDefault(), null);
+                                            parametersArray[index] = dependencyInstance;
+                                        }
+                                        index++;
+                                    }
+
+                                    result = (Envelope)actionMethod.Invoke(classInstance, parametersArray);
+                                }
+
+                                classInstance = null;
+                                //System.GC.Collect();
+                                string json = JsonConvert.SerializeObject(result);
+
+                                context.Response.ContentType = "application/json";
+                                await context.Response.WriteAsync(json);
+
                             }
                             else
                             {
-                                object[] parametersArray = new object[] { data };
-                                result = (Envelope)actionMethod.Invoke(classInstance, parametersArray);
+                                context.Response.StatusCode = 400;
+                                await context.Response.WriteAsync("Resource action not found!");
                             }
-
-                            classInstance = null;
-                            //System.GC.Collect();
-                            string json = JsonConvert.SerializeObject(result);
-
-                            context.Response.ContentType = "application/json";
-                            await context.Response.WriteAsync(json);
-
                         }
                         else
                         {
                             context.Response.StatusCode = 400;
-                            await context.Response.WriteAsync("Resource action not found!");
+                            await context.Response.WriteAsync("Resource entity not found!");
                         }
                     }
                     else
                     {
-                        context.Response.StatusCode = 400;
-                        await context.Response.WriteAsync("Resource entity not found!");
+                        context.Response.StatusCode = 403;
+                        await context.Response.WriteAsync("User Forbidden");
                     }
                 }
                 catch (Exception ex)
